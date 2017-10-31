@@ -1,0 +1,23 @@
+#!/usr/bin/env ruby
+
+require 'bundler/setup'
+require "asana"
+require "json"
+require "dotenv/load"
+
+p 'asana'
+
+# personal_access_token = ENV['PERSONAL_ACCESS_TOKEN']
+# workspace_id = ENV['WORKSPACE_ID']
+# # assignee = ENV['ASSIGNEE']
+#
+# client = Asana::Client.new do |c|
+#   c.authentication :access_token, personal_access_token
+# end
+#
+# @projects = client.projects.find_all(workspace: workspace_id).map { |project| {} << project.name }
+#
+# # @client.tasks.find_all(assignee: assignee, workspace: workspace_id, completed_since: 'now', options: { fields: [ 'name', 'projects' ] })
+# @tasks = project_ids.map { |id| client.tasks.find_all(project: id, completed_since: 'now', options: { fields: [ 'name', 'id' ] })}
+# client.tasks.find_by_id(423621591195884).update(completed: true)
+# p @projects
