@@ -56,14 +56,10 @@ when 'argv'
   end
 when 'projects'
   body = asana.setup_connection("projects", "get")
-  if argv[1] == 'ids'
+  unless argv[1].nil?
     ids =  body["data"].map { |project| project['id'] }
-    unless argv[2].nil?
-      num = argv[2].to_i
-      p ids[num]
-      return
-    end
-    p ids
+    num = argv[1].to_i
+    p ids[num]
     return
   end
   body["data"].map.with_index { |project, index| puts "#{index}: id:#{project['id']} #{project['name']}" }
