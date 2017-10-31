@@ -1,16 +1,113 @@
 #!/usr/bin/env ruby
 
-require 'bundler/setup'
-require "asana"
 require "json"
-require "dotenv/load"
+require "uri"
+require "net/https"
 
-p 'asana'
+if ENV['PERSONAL_ACCESS_TOKEN'].nil? || ENV['WORKSPACE_ID'].nil? || ENV['ASSIGNEE'].nil?
+  puts "Please set values. / PERSONAL_ACCESS_TOKEN and WORKSPACE_ID and ASSIGNEE'"
+  return
+end
 
-# personal_access_token = ENV['PERSONAL_ACCESS_TOKEN']
-# workspace_id = ENV['WORKSPACE_ID']
-# # assignee = ENV['ASSIGNEE']
-#
+class Asana
+
+  attr_accessor :personal_access_token, :workspace_id, :assignee
+
+  def initialize
+    @personal_access_token = ENV['PERSONAL_ACCESS_TOKEN']
+    @workspace_id = ENV['WORKSPACE_ID']
+    @assignee = ENV['ASSIGNEE']
+  end
+
+  def projects
+    request = <<~JSON
+      {
+        "data" => {
+          "workspace" => workspace_id,
+        }
+      }
+    JSON
+    res = setup_connection("projects", "get", request)
+    body = JSON.parse(res.body)
+  end
+
+  def all_tasks
+    request = <<~JSON
+        {
+        "data" => {
+          "workspace" => workspace_id,
+        }
+      }
+    JSON
+    res = setup_connection("projects", "get", request)
+    JSON.parse(res.body)
+  end
+
+  def setup_connection(target, crud, request)
+    uri = URI.parse("https://app.asana.com/api/1.0/#{target}")
+    http = Net::HTTP.new(uri.host, uri.port)
+    http.use_ssl = true
+    http.verify_mode = OpenSSL::SSL::VERIFY_PEER
+    header = {
+      "Content-Type" => "application/json"
+    }
+    req = eval <<~RUBY
+      Net::HTTP::#{crud.capitalize}.new(uri.path, header)
+    RUBY
+    req.basic_auth(@personal_access_token, '')
+    req.body = request.to_json()
+    http.start { |http| http.request(req) }
+  end
+end
+
+asana = Asana.new
+argv = ARGV
+
+case argv[0]
+when 'hello'
+  puts 'Good Morning!'
+when 'env'
+  # 環境変数のチェック
+  puts <<~EOM
+    1: #{asana.personal_access_token}
+    2: #{asana.workspace_id}
+    3: #{asana.assignee}
+  EOM
+when 'argv'
+  # 引数のチェック
+  puts "$0：#{$0}"
+
+  ARGV.each_with_index do |arg, i|
+      puts "ARGV[#{i}]：#{arg}"
+  end
+when 'projects'
+  body = asana.projects
+  if argv[1] == 'ids'
+    ids =  body["data"].map { |project| project['id'] }
+    unless argv[2].nil?
+      num = argv[2].to_i
+      p ids[num]
+      return
+    end
+    p ids
+    return
+  end
+  body["data"].map.with_index { |project, index| puts "#{index}: id:#{project['id']} #{project['name']}" }
+when 'tasks'
+  request = <<~JSON
+    {
+      "data" => {
+        "workspace" => "381427447349836",
+        "assignee" => "me",
+        "completed_since" => "now"
+      }
+    }
+  JSON
+  res = asana.setup_connection("tasks", "get", request)
+  body = JSON.parse(res.body)
+  p body
+end
+
 # client = Asana::Client.new do |c|
 #   c.authentication :access_token, personal_access_token
 # end
