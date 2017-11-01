@@ -80,4 +80,18 @@ when 'create'
   }
   body = asana.setup_connection("tasks", "post", request)
   puts "Created Task id:#{body['data']['id']} #{body['data']['name']}"
+when 'complete'
+  if argv[1].nil?
+    puts "Please enter [task_id] => '$ asana complete [task_id]'"
+    return
+  end
+  task_id = argv[1].to_i
+  request = {
+    "data" => {
+      "assignee" => "me",
+      "completed" => "true"
+    }
+  }
+  body = asana.setup_connection("tasks/#{task_id}", "put", request)
+  puts "Completed Task id:#{body['data']['id']} #{body['data']['name']}"
 end
