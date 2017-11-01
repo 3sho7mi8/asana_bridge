@@ -60,6 +60,10 @@ when 'projects'
     ids =  body["data"].map { |project| project['id'] }
     num = argv[1].to_i
     p ids[num]
+    if argv[2] == 'tasks'
+      body = asana.setup_connection("tasks?project=#{ids[num]}&completed_since=now&limit=100", "get")
+      body["data"].map.with_index { |task, index| puts "#{index}: id:#{task['id']} #{task['name']}" }
+    end
     return
   end
   body["data"].map.with_index { |project, index| puts "#{index}: id:#{project['id']} #{project['name']}" }
