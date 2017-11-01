@@ -57,12 +57,37 @@ when 'argv'
 when 'projects'
   body = asana.setup_connection("projects", "get")
   unless argv[1].nil?
-    ids =  body["data"].map { |project| project['id'] }
+    project_ids =  body["data"].map { |project| project['id'] }
+    project_names =  body["data"].map { |project| project['name'] }
     num = argv[1].to_i
-    p ids[num]
-    if argv[2] == 'tasks'
-      body = asana.setup_connection("tasks?project=#{ids[num]}&completed_since=now&limit=100", "get")
+    project_id = project_ids[num]
+    project_name = project_names[num]
+    puts "#{project_name}:"
+    case argv[2]
+    when 'tasks'
+      body = asana.setup_connection("tasks?project=#{project_id}&completed_since=now&limit=100", "get")
       body["data"].map.with_index { |task, index| puts "#{index}: id:#{task['id']} #{task['name']}" }
+    when 'create'
+      if argv[3].nil?
+        puts "Please enter [task_name] => '$ asana projects [num] create [task_name]'"
+        return
+      end
+      request = {
+        "data" => {
+          "workspace" => "#{workspace_id}",
+          "name" => "#{argv[3]}",
+          "assignee" => "me"
+        }
+      }
+      body = asana.setup_connection("tasks", "post", request)
+      task_id = body['data']['id']
+      request = {
+        "data" => {
+          "project" => "#{project_id}",
+        }
+      }
+      asana.setup_connection("tasks/#{task_id}/addProject", "post", request)
+      puts "Created Project[#{project_name}] Task: id:#{body['data']['id']} #{body['data']['name']}"
     end
     return
   end
@@ -72,7 +97,7 @@ when 'tasks'
   body["data"].map.with_index { |task, index| puts "#{index}: id:#{task['id']} [#{task['projects'][0]['name']}] #{task['name']}" }
 when 'create'
   if argv[1].nil?
-    puts "Please enter [task_name] => '$ asana create [task_name]'"
+    puts "CAUTION: Please enter [task_name] => '$ asana create [task_name]'"
     return
   end
   request = {
@@ -83,10 +108,10 @@ when 'create'
     }
   }
   body = asana.setup_connection("tasks", "post", request)
-  puts "Created Task id:#{body['data']['id']} #{body['data']['name']}"
+  puts "Created Task: id:#{body['data']['id']} #{body['data']['name']}"
 when 'complete'
   if argv[1].nil?
-    puts "Please enter [task_id] => '$ asana complete [task_id]'"
+    puts "CAUTION: Please enter [task_id] => '$ asana complete [task_id]'"
     return
   end
   task_id = argv[1].to_i
@@ -97,5 +122,5 @@ when 'complete'
     }
   }
   body = asana.setup_connection("tasks/#{task_id}", "put", request)
-  puts "Completed Task id:#{body['data']['id']} #{body['data']['name']}"
+  puts "Completed Task: id:#{body['data']['id']} #{body['data']['name']}"
 end
