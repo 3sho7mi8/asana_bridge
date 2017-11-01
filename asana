@@ -66,4 +66,18 @@ when 'projects'
 when 'tasks'
   body = asana.setup_connection("tasks?assignee=me&completed_since=now&limit=100&workspace=#{workspace_id}", "get")
   body["data"].map.with_index { |task, index| puts "#{index}: id:#{task['id']} #{task['name']}" }
+when 'create'
+  if argv[1].nil?
+    puts "Please enter [task_name] => '$ asana create [task_name]'"
+    return
+  end
+  request = {
+    "data" => {
+      "workspace" => "#{workspace_id}",
+      "name" => "#{argv[1]}",
+      "assignee" => "me"
+    }
+  }
+  body = asana.setup_connection("tasks", "post", request)
+  puts "Created Task id:#{body['data']['id']} #{body['data']['name']}"
 end
