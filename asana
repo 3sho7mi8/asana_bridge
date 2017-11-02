@@ -2,6 +2,7 @@
 
 require "json"
 require "uri"
+require "date"
 require "net/http"
 
 if ENV['PERSONAL_ACCESS_TOKEN'].nil? || ENV['WORKSPACE_ID'].nil? || ENV['ASSIGNEE'].nil?
@@ -93,8 +94,12 @@ when 'projects'
   end
   body["data"].map.with_index { |project, index| puts "#{index}: id:#{project['id']} #{project['name']}" }
 when 'tasks'
-  body = asana.setup_connection("tasks?opt_expand=projects&assignee=me&completed_since=now&limit=100&workspace=#{workspace_id}", "get")
-  body["data"].map.with_index { |task, index| puts "#{index}: id:#{task['id']} [#{task['projects'][0]['name']}] #{task['name']}" }
+  body = asana.setup_connection("tasks?opt_expand=due_on,projects&assignee=me&completed_since=now&limit=100&workspace=#{workspace_id}", "get")
+  body["data"].sort_by { |i| i["due_on"].to_i }.each_with_index do |task, index|
+    task['due_on'] == Date.today.strftime('%Y-%m-%d') ? due = '[TODAY]' : due = "[#{task['due_on']}]"
+    due = nil if due == "[]"
+    puts "#{index}: id:#{task['id']} [#{task['projects'][0]['name']}]#{due} #{task['name']}"
+  end
 when 'create'
   if argv[1].nil?
     puts "CAUTION: Please enter [task_name] => '$ asana create [task_name]'"
