@@ -98,7 +98,8 @@ when 'tasks'
   body["data"].sort_by { |i| i["due_on"].to_i }.each_with_index do |task, index|
     task['due_on'] == Date.today.strftime('%Y-%m-%d') ? due = '[TODAY]' : due = "[#{task['due_on']}]"
     due = nil if due == "[]"
-    puts "#{index}: id:#{task['id']} [#{task['projects'][0]['name']}]#{due} #{task['name']}"
+    project = task['projects'] == [] ? 'NO PROJECT' : task['projects'][0]['name']
+    puts "#{index}: id:#{task['id']} [#{project}]#{due} #{task['name']}"
   end
 when 'create'
   if argv[1].nil?
