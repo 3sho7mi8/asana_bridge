@@ -99,7 +99,7 @@ when 'tasks'
     due = task['due_on'] == Date.today.strftime('%Y-%m-%d') ? '[TODAY]' : "[#{task['due_on']}]"
     due = nil if due == "[]"
     project = task['projects'] == [] ? 'NO PROJECT' : task['projects'][0]['name']
-    puts "#{index}: id:#{task['id']} [#{project}]#{due} #{task['name']}"
+    puts "#{index}. #{task['id']} [#{project}]#{due} #{task['name']}"
   end
 when 'create'
   if argv[1].nil?
