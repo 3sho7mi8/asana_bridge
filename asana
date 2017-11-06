@@ -94,12 +94,28 @@ when 'projects'
   end
   body["data"].map.with_index { |project, index| puts "#{index}: id:#{project['id']} #{project['name']}" }
 when 'tasks'
-  body = asana.setup_connection("tasks?opt_expand=due_on,projects&assignee=me&completed_since=now&limit=100&workspace=#{workspace_id}", "get")
-  body["data"].sort_by { |i| i["due_on"].to_i }.each_with_index do |task, index|
+  body = asana.setup_connection("tasks?opt_expand=due_on,projects,parent&assignee=me&completed_since=now&limit=100&workspace=#{workspace_id}", "get")
+  children = body.fetch("data").select{ |data| data["parent"] != nil}
+  children.each do |child|
+    body.fetch("data").delete_if { |task| task.fetch("id") == child.fetch("id")}
+  end
+
+  parent_ids = children.map{|child| child["parent"]["id"] }.uniq
+
+  body.fetch("data").sort_by { |i| i["due_on"].to_i }.each_with_index do |task, index|
     due = task['due_on'] == Date.today.strftime('%Y-%m-%d') ? '[TODAY]' : "[#{task['due_on']}]"
     due = nil if due == "[]"
     project = task['projects'] == [] ? 'NO PROJECT' : task['projects'][0]['name']
-    puts "#{index}. #{task['id']} [#{project}]#{due} #{task['name']}"
+    puts "#{index}. id:#{task['id']} [#{project}]#{due} #{task['name']}"
+
+    task_id = task.fetch("id")
+
+    if parent_ids.include?(task_id)
+      biol_children = children.select {|child| child["parent"]["id"] == task_id }
+      biol_children.each.with_index do |task, index|
+        puts "\t#{index}. id:#{task['id']} #{task['name']}"
+      end
+    end
   end
 when 'create'
   if argv[1].nil?
