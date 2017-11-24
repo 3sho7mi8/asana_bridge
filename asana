@@ -103,12 +103,12 @@ when 'tasks'
   parent_ids = children.map{|child| child["parent"]["id"] }.uniq
 
   body.fetch("data").group_by { |data| data["projects"][0]["name"] }.each do |project|
-    puts "#{project[0]}"
+    puts "\n#{project[0]}"
     project[1].sort_by { |i| i["due_on"].to_s }.each_with_index do |task, index|
-      due = task['due_on'] == Date.today.strftime('%Y-%m-%d') ? '[TODAY]' : "[#{task['due_on']}]"
-      due = nil if due == "[]"
+      due = task['due_on'] == Date.today.strftime('%Y-%m-%d') ? ' TODAY' : " #{task['due_on']}"
+      due = nil if due == " "
       project = task['projects'] == [] ? 'NO PROJECT' : task['projects'][0]['name']
-      puts "#{index}. id:#{task['id']} [#{project}]#{due} #{task['name']}"
+      puts "#{index}. id:#{task['id']} #{project}#{due} #{task['name']}"
 
       task_id = task.fetch("id")
 
