@@ -102,18 +102,21 @@ when 'tasks'
 
   parent_ids = children.map{|child| child["parent"]["id"] }.uniq
 
-  body.fetch("data").sort_by { |i| i["due_on"].to_i }.each_with_index do |task, index|
-    due = task['due_on'] == Date.today.strftime('%Y-%m-%d') ? '[TODAY]' : "[#{task['due_on']}]"
-    due = nil if due == "[]"
-    project = task['projects'] == [] ? 'NO PROJECT' : task['projects'][0]['name']
-    puts "#{index}. id:#{task['id']} [#{project}]#{due} #{task['name']}"
+  body.fetch("data").group_by { |data| data["projects"][0]["name"] }.each do |project|
+    puts "#{project[0]}"
+    project[1].sort_by { |i| i["due_on"].to_i }.each_with_index do |task, index|
+      due = task['due_on'] == Date.today.strftime('%Y-%m-%d') ? '[TODAY]' : "[#{task['due_on']}]"
+      due = nil if due == "[]"
+      project = task['projects'] == [] ? 'NO PROJECT' : task['projects'][0]['name']
+      puts "#{index}. id:#{task['id']} [#{project}]#{due} #{task['name']}"
 
-    task_id = task.fetch("id")
+      task_id = task.fetch("id")
 
-    if parent_ids.include?(task_id)
-      biol_children = children.select {|child| child["parent"]["id"] == task_id }
-      biol_children.each.with_index do |task, index|
-        puts "\t#{index}. id:#{task['id']} #{task['name']}"
+      if parent_ids.include?(task_id)
+        biol_children = children.select {|child| child["parent"]["id"] == task_id }
+        biol_children.each.with_index do |task, index|
+          puts "\t#{index}. id:#{task['id']} #{task['name']}"
+        end
       end
     end
   end
